@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  mongo1:
+    container_name: mongo1
+    build:
+      context: ./
+      dockerfile: ./dockerfiles/mongo.dockerfile
+    networks:
+      - mongo-cluster
+    ports:
+      - 27017:27017
+    depends_on:
+      - mongo2
+      - mongo3
+    links:
+      - mongo2
+      - mongo3
+    restart: always
+    command: 'mongod --bind_ip_all --replSet myReplicaSet --keyFile /data/keyfile.pem'
+    # healthcheck:
+    #   test: test $$(mongosh --quiet -u admin -p admin --eval "rs.status().ok") -eq 1
+    #   interval: 5s
+
+  mongo2:
+    container_name: mongo2
+    build:
+      context: ./
+      dockerfile: ./dockerfiles/mongo.dockerfile
+    networks:
+      - mongo-cluster
+    ports:
+      - 27018:27017
+    restart: always
+    command: 'mongod --bind_ip_all --replSet myReplicaSet --keyFile /data/keyfile.pem'
+
+  mongo3:
+    container_name: mongo3
+    build:
+      context: ./
+      dockerfile: ./dockerfiles/mongo.dockerfile
+    networks:
+      - mongo-cluster
+    ports:
+      - 27019:27017
+    restart: always
+    command: 'mongod --bind_ip_all --replSet myReplicaSet --keyFile /data/keyfile.pem'
+
+  api:
+    container_name: api
+    build:
+      context: ./
+      dockerfile: ./dockerfiles/nestjs.dockerfile
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    networks:
+      - mongo-cluster
+    ports:
+      - 3000:3000
+    tty: true
+    command: 'yarn start:cnt:prod'
+
+networks:
+  mongo-cluster:
+    driver: bridge

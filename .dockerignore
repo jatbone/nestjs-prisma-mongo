@@ -1,0 +1,12 @@
+docker-compose.yml
+node-compose.yml
+mongodb.dockerfile
+node.dockerfile
+.dockerignore
+scripts
+.git
+.gitignore
+test
+node_modules
+dist
+.prettierc
